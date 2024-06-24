@@ -31,21 +31,19 @@ jobs:
     - name: Run sccache-cache
       uses: mozilla-actions/sccache-action@v0.0.4
     - uses: actions/checkout@v4
-    - uses: actions-rs/toolchain@v1
+    - uses: dtolnay/rust-toolchain@stable
       with:
-          toolchain: 1.78.0
           components: clippy, rustfmt
-          override: true
     - name: Build
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
-    - uses: actions-rs/clippy-check@v1
+    - uses: clechasseur/rs-clippy-check@v3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         args: --workspace
-        name: Lints
-    - uses: actions-rs/clippy-check@v1
+        name: Lins
+    - uses: clechasseur/rs-clippy-check@v3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         args: --workspace -- -A warnings -W clippy::pedantic -W clippy::perf
