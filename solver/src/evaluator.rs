@@ -1,10 +1,10 @@
+use futures::executor::enter;
 use std::borrow::Cow;
 use std::cell::OnceCell;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::{Debug, Formatter};
 use std::ops::{Add, ControlFlow, Neg};
 use std::sync::Arc;
-use futures::executor::enter;
 
 use miette::{Diagnostic, Report};
 use serde::__private::de::Borrowed;
@@ -681,7 +681,7 @@ impl Evaluable for ICFPExpr {
       };
 
       if expr == result {
-        return Ok(result)
+        return Ok(result);
       } else {
         trace!(expr = %result, "next eval");
         expr = result;

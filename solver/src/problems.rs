@@ -105,6 +105,8 @@ pub(crate) async fn download(
   let problem_path = problems_dir.join(format!("{name}{id}"));
   let problem_error_path = problems_dir.join(format!("{name}{id}.eval-error.txt"));
   let problem_raw_path = problems_dir.join(format!("{name}{id}.raw"));
+  let problem_expr_path = problems_dir.join(format!("{name}{id}.expr"));
+  let problem_debug_path = problems_dir.join(format!("{name}{id}.debug"));
 
   let request = format!("get {name}{id}");
 
@@ -114,8 +116,15 @@ pub(crate) async fn download(
 
   std::fs::write(problem_raw_path, &response)
     .map_err(|e| miette!("Failed to write raw file: {}", e))?;
+
   let parse_result =
     ICFPExpr::parse(&response).map_err(|e| miette!(help = response, "Error Parsing: {}", e))?;
+
+  std::fs::write(problem_expr_path, format!("{}", parse_result))
+    .map_err(|e| miette!("Failed to write raw file: {}", e))?;
+
+  std::fs::write(problem_debug_path, format!("{:#?}", parse_result))
+    .map_err(|e| miette!("Failed to write raw file: {}", e))?;
 
   if let ICFPExpr::String(page_text) = parse_result {
     std::fs::write(problem_path, page_text.decode()?)
