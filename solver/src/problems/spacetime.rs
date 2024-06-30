@@ -21,6 +21,7 @@ enum Operator {
   NotEq,
 }
 
+#[allow(dead_code)]
 #[derive(Copy, Clone)]
 enum OperatorArity {
   Unary,

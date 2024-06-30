@@ -6,7 +6,7 @@ use std::fmt::{Debug, Formatter};
 use std::ops::Add;
 use std::path::PathBuf;
 use thiserror::Error;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 
 #[allow(dead_code)]
 pub mod spaceship;
@@ -142,7 +142,7 @@ pub(crate) async fn download(
     };
 
     let ICFPExpr::String(page_text) = result else {
-      println!("did not eval to a string!");
+      warn!(%result, "did not eval to a string!");
       return Ok(());
     };
     std::fs::write(problem_path, page_text.decode()?)

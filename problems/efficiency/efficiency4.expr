@@ -1,0 +1,1 @@
+(function lam_0(var_1){ (function lam_1(var_2){ var_1(var_2(var_2)) })((function lam_2(var_2){ var_1(var_2(var_2)) })) })((function lam_3(var_3){ (function lam_4(var_4){ if ((var_4 < 2)) { 1 } else { (var_3((var_4 - 1)) + var_3((var_4 - 2))) } }) }))(40)

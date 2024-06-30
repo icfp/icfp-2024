@@ -107,7 +107,7 @@ use std::ops::DivAssign;
 use std::str::SplitWhitespace;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
-use tracing::{debug, warn};
+use tracing::{debug, trace, warn};
 
 const ALIEN_ASCII : &'static str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`|~ \n";
 const MIN_CHAR: char = '!'; // ASCII 33
@@ -127,6 +127,8 @@ pub enum DeferredDecode<T> {
   },
   Lit(T),
 }
+
+pub(crate) mod nums;
 
 impl<T: Clone> DeferredDecode<T> {
   pub fn deferred(body: &str) -> Self {
@@ -191,7 +193,7 @@ impl DeferredDecode<IntType> {
       DeferredDecode::Deferred { coded, lazy } => {
         let res = lazy.get_or_init({
           let clone = coded.clone();
-          move || base94_decode(&clone)
+          move || nums::base94_decode(&clone)
         });
         match res {
           Ok(i) => Ok(i.clone()),
@@ -239,6 +241,31 @@ impl Debug for DeferredDecode<String> {
   }
 }
 
+impl Display for DeferredDecode<IntType> {
+  fn fmt(
+    &self,
+    f: &mut Formatter<'_>,
+  ) -> std::fmt::Result {
+    match self.decode() {
+      Ok(v) => write!(f, "{}", v),
+      e => write!(f, "Int({:?})", e),
+    }
+  }
+}
+
+impl Display for DeferredDecode<String> {
+  fn fmt(
+    &self,
+    f: &mut Formatter<'_>,
+  ) -> std::fmt::Result {
+    match self.decode() {
+      Ok(v) => write!(f, "{}", v),
+      e => write!(f, "String({:?})", e),
+    }
+  }
+}
+
+#[allow(dead_code)]
 /// ICFP Alien Language
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum ICFPExpr {
@@ -395,8 +422,8 @@ impl Display for ICFPExpr {
   ) -> std::fmt::Result {
     match self {
       ICFPExpr::Boolean(t) => write!(f, "{}", t),
-      ICFPExpr::Integer(i) => write!(f, "{:?}", i),
-      ICFPExpr::String(s) => write!(f, "{:?}", s),
+      ICFPExpr::Integer(i) => write!(f, "{}", i),
+      ICFPExpr::String(s) => write!(f, "{}", s),
       ICFPExpr::UnaryOp(op, operand) => match op {
         UnOp::Negate => write!(f, " -{} ", operand),
         UnOp::Not => write!(f, " !{} ", operand),
@@ -566,60 +593,6 @@ impl Encode for bool {
   }
 }
 
-// How the fuck do you do negatives?
-pub fn base94_encode_number(mut num: IntType) -> String {
-  let ascii_offset = 33; // '!' is ASCII 33
-  let mut encoded = String::new();
-
-  if num == 0 {
-    return format!("{}", MIN_CHAR);
-  }
-
-  while num > 0 {
-    let base: IntType = NUM_BASE.into();
-    let rem: IntType = num.clone().mod_op(&base);
-    let remainder: u8 = i64::try_from(&rem).unwrap() as u8;
-    num.div_assign(base);
-    encoded.push((remainder + ascii_offset) as char);
-  }
-
-  encoded.chars().rev().collect() // Reverse the encoded string
-}
-
-pub fn base94_decode(encoded: &str) -> Result<IntType> {
-  let ascii_offset = 33; // '!' is ASCII 33
-  let mut num: malachite::Integer = malachite::Integer::ZERO;
-
-  for (i, char) in encoded.chars().rev().enumerate() {
-    let value = (char as NatType).checked_sub(ascii_offset);
-    if let Some(digit) = value {
-      let digit = malachite::Integer::from(digit);
-      let base = IntType::from(NUM_BASE);
-      if digit < base {
-        debug!(i, "^Power");
-        let pow = base.pow(i as u64);
-        debug!(?digit, ?pow, "digit*pow");
-        num += digit * pow;
-        //.ok_or(miette!("Encoded Number is too big: {encoded}"))?;
-      } else {
-        return Err(miette!(
-          labels = vec![LabeledSpan::at(i..i + 1, "invalid"),],
-          "Invalid character '{}' in input",
-          char
-        ));
-      }
-    } else {
-      return Err(miette!(
-        labels = vec![LabeledSpan::at(i..i + 1, "invalid"),],
-        "Invalid character '{}' in input",
-        char
-      ));
-    }
-  }
-
-  Ok(num as IntType)
-}
-
 impl Encode for DeferredDecode<String> {
   fn encode(&self) -> String {
     match self {
@@ -640,19 +613,19 @@ impl Encode for DeferredDecode<IntType> {
 
 impl Encode for IntType {
   fn encode(&self) -> String {
-    base94_encode_number(self.clone())
+    nums::base94_encode_number(self.clone())
   }
 }
 
 impl Encode for i64 {
   fn encode(&self) -> String {
-    base94_encode_number((*self).into())
+    nums::base94_encode_number((*self).into())
   }
 }
 
 impl Encode for Var {
   fn encode(&self) -> String {
-    base94_encode_number(self.0.into())
+    nums::base94_encode_number(self.0.into())
   }
 }
 
@@ -771,13 +744,15 @@ impl Decode for String {
 
 impl Decode for IntType {
   fn decode(input: &str) -> Result<Self> {
-    Ok(base94_decode(input)?)
+    Ok(nums::base94_decode(input)?)
   }
 }
 
 impl Decode for Var {
   fn decode(input: &str) -> Result<Self> {
-    Ok(Var(NatType::try_from(&base94_decode(input)?).unwrap()))
+    Ok(Var(
+      NatType::try_from(&nums::base94_decode(input)?).unwrap(),
+    ))
   }
 }
 

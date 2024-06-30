@@ -9,8 +9,11 @@ students must learn to find the evaluation result of such complex expressions wi
 # Tip of the day
 
 Did you know that the binary call-by-name application operator $ has two siblings?
-The binary operator ~ (lazy application) is a call-by-need variant on the $ operator, and the binary operator ! (strict application) i
-s the call-by-value variant. Smart usage of these can help you save many beta reductions!
+
+The binary operator `~` (lazy application) is a call-by-need variant on the `$` operator,
+and the binary operator `!` (strict application) is the call-by-value variant.
+
+Smart usage of these can help you save many beta reductions!
 
 # Problems
 

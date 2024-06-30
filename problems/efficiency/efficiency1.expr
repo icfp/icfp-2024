@@ -1,1 +1,2 @@
-(function lam_0(var_0){ var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(Int(Ok(1)))))))))))))))))))))))) })((function lam_1(var_0){ ((var_0 + var_0) + (var_0 + var_0)) }))
+(function lam_0(var_0){ var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(var_0(1)))))))))))))))))))))) })
+((function lam_1(var_0){ ((var_0 + var_0) + (var_0 + var_0)) }))
