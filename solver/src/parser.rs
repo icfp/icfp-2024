@@ -453,8 +453,7 @@ impl Display for ICFPExpr {
       ICFPExpr::Lambda(id, var, body) => {
         if matches!(**body, ICFPExpr::If(_, _, _)) {
           write!(f, "(function lam_{id}({}){{ {} }})", var, body)
-        }
-        else {
+        } else {
           write!(f, "(function lam_{id}({}){{ return {} }})", var, body)
         }
       }
