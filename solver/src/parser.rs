@@ -98,16 +98,13 @@
     126 176	7E	01111110	~	&#126;	&tilde;	Equivalency sign - tilde
 */
 use crate::evaluator::Environment;
-use malachite::num::arithmetic::traits::{Mod, Pow};
-use malachite::num::basic::traits::Zero;
-use miette::{miette, LabeledSpan, Result};
+use miette::{miette, Result};
 use std::cell::OnceCell;
 use std::fmt::{Debug, Display, Formatter};
-use std::ops::DivAssign;
 use std::str::SplitWhitespace;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
-use tracing::{debug, trace, warn};
+use tracing::warn;
 
 const ALIEN_ASCII : &'static str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`|~ \n";
 const MIN_CHAR: char = '!'; // ASCII 33
