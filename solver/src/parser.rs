@@ -256,7 +256,7 @@ impl Display for DeferredDecode<String> {
     f: &mut Formatter<'_>,
   ) -> std::fmt::Result {
     match self.decode() {
-      Ok(v) => write!(f, "{}", v),
+      Ok(v) => write!(f, "{:?}", v),
       e => write!(f, "String({:?})", e),
     }
   }
@@ -451,7 +451,12 @@ impl Display for ICFPExpr {
         )
       }
       ICFPExpr::Lambda(id, var, body) => {
-        write!(f, "(function lam_{id}({}){{ return {} }})", var, body)
+        if matches!(**body, ICFPExpr::If(_, _, _)) {
+          write!(f, "(function lam_{id}({}){{ {} }})", var, body)
+        }
+        else {
+          write!(f, "(function lam_{id}({}){{ return {} }})", var, body)
+        }
       }
       ICFPExpr::VarRef(var) => write!(f, "{}", var),
       ICFPExpr::Closure { id, arg, body, env } => {
