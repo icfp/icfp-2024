@@ -1,6 +1,6 @@
 use crate::communicator::send_program;
 use crate::evaluator::eval;
-use crate::parser::{Encode, ICFPExpr, Parsable};
+use crate::parser::{BinOp, Encode, ICFPExpr, Parsable};
 use miette::{miette, Diagnostic};
 use std::fmt::{Debug, Formatter};
 use std::ops::Add;
@@ -200,6 +200,29 @@ pub(crate) async fn submit(
   Ok(())
 }
 
+pub(crate) async fn submit_expr(
+  problem: &str,
+  id: usize,
+  solution: ICFPExpr,
+) -> miette::Result<()> {
+  let request = format!("solve {problem}{id} ");
+
+  info!(request, "Submitting solution");
+  let prog = ICFPExpr::bin_op(request, BinOp::Concat, solution);
+
+  let encoded_solution = dbg!(prog.encode());
+
+  dbg!(ICFPExpr::parse(&encoded_solution)?);
+
+  let response = send_program(encoded_solution).await?;
+
+  let result = ICFPExpr::parse(&response).map_err(|e| miette!("Error Parsing: {}", e))?;
+
+  println!("Response: {result:?}");
+
+  Ok(())
+}
+
 pub(crate) async fn submit_new_line(
   problem: &str,
   id: usize,
@@ -210,11 +233,7 @@ pub(crate) async fn submit_new_line(
   info!(request, "Submitting solution");
   let prog = ICFPExpr::str(request);
 
-  let response = send_program(prog.encode()).await?;
-
-  let result = ICFPExpr::parse(&response).map_err(|e| miette!("Error Parsing: {}", e))?;
-
-  println!("Response: {result:?}");
+  submit_expr(problem, id, prog).await?;
 
   Ok(())
 }

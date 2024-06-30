@@ -670,7 +670,22 @@ impl Encode for UnOp {
 
 impl Encode for BinOp {
   fn encode(&self) -> String {
-    "".to_string()
+    match self {
+      BinOp::Add => "+".to_string(),
+      BinOp::Sub => "-".to_string(),
+      BinOp::Mul => "*".to_string(),
+      BinOp::Div => "/".to_string(),
+      BinOp::Mod => "%".to_string(),
+      BinOp::LessThan => "<".to_string(),
+      BinOp::GreaterThan => ">".to_string(),
+      BinOp::Equals => "=".to_string(),
+      BinOp::Or => "|".to_string(),
+      BinOp::And => "&".to_string(),
+      BinOp::Concat => ".".to_string(),
+      BinOp::TakeChars => "T".to_string(),
+      BinOp::SkipChars => "D".to_string(),
+      BinOp::ApplyLambda => "$".to_string(),
+    }
   }
 }
 

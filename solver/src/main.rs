@@ -53,6 +53,7 @@ enum Command {
     #[command(subcommand)]
     command: SpaceCommand,
   },
+  Fuzz {},
 }
 
 #[derive(Subcommand)]
@@ -85,7 +86,7 @@ async fn main() -> miette::Result<()> {
       info!(expr = ?ICFPExpr::parse(input)
         .map_err(|e| miette!("Error Parsing: {}", e))?, "Request");
 
-      let response = communicator::send_program(input.to_string()).await?;
+      let response = send_program(input.to_string()).await?;
 
       info!(response = ?ICFPExpr::parse(&response)
         .map_err(|e| miette!("Error Parsing: {}", e))?, "Response");
@@ -173,8 +174,16 @@ async fn main() -> miette::Result<()> {
     } => {
       const PROBLEM_NAME: &'static str = "lambdaman";
       let input = problems::load_input(PROBLEM_NAME, problem_id)?;
-      let solution = problems::lambdaman::solve(problem_id, input)?;
-      problems::submit(PROBLEM_NAME, problem_id, solution).await?
+      if problem_id == 9 {
+        let result = problems::lambdaman::solutions::problem_9()?;
+        println!("Prog:");
+        println!("{}", result.encode());
+
+        problems::submit_expr(PROBLEM_NAME, problem_id, result).await?
+      } else {
+        let solution = problems::lambdaman::solve(problem_id, input)?;
+        problems::submit(PROBLEM_NAME, problem_id, solution).await?
+      };
     }
     Command::Spacetime {
       problem: problem_id,
@@ -195,6 +204,9 @@ async fn main() -> miette::Result<()> {
           let _solution = problems::spacetime::simulate(iterations, solution, args)?;
         }
       }
+    }
+    Command::Fuzz {} => {
+      let result1 = problems::lambdaman::solutions::problem_9()?;
     }
   }
 

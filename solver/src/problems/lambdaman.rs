@@ -232,3 +232,121 @@ pub fn solve(
     }),
   }
 }
+
+#[cfg(test)]
+mod test {
+  use crate::evaluator::{eval, EvalError};
+  use crate::parser::BinOp::Concat;
+  use crate::parser::ICFPExpr::VarRef;
+  use crate::parser::{BinOp, Encode, ICFPExpr, Var};
+  use miette::Report;
+  use tracing_test::traced_test;
+
+  #[test]
+  fn prob9() -> Result<(), Report> {
+    let result = super::solutions::problem_9()?;
+
+    assert_eq!(eval(result)?, "..........".into());
+    Ok(())
+  }
+}
+
+pub mod solutions {
+  use crate::evaluator::eval;
+  use crate::parser::BinOp::Concat;
+  use crate::parser::ICFPExpr::VarRef;
+  use crate::parser::{BinOp, Encode, ICFPExpr, Var};
+  use miette::Report;
+
+  pub fn problem_9() -> Result<ICFPExpr, Report> {
+    let func_var = Var(0);
+    let self_var = Var(1);
+    let self_call = Var(3);
+
+    let recurse = ICFPExpr::lambda(
+      1,
+      func_var,
+      ICFPExpr::call(
+        ICFPExpr::lambda(
+          2,
+          self_var,
+          ICFPExpr::call(func_var, ICFPExpr::call(self_var, self_var)),
+        ),
+        ICFPExpr::lambda(
+          3,
+          self_var,
+          ICFPExpr::call(func_var, ICFPExpr::call(self_var, self_var)),
+        ),
+      ),
+    );
+
+    // ( 49 x R D 49 x L D ) x 25
+
+    // loop(25) { // 1
+    // (loop(49) { //10 "R".concat(loop(48)) }).concat("D")
+    //  .concat(
+    //        (loop(49) { // 20 "L".concat(loop(48)) }).concat("D")).(loop(24))
+
+    let num_rs = 49;
+
+    let n_var = Var(10);
+    let R_49 = ICFPExpr::lambda(
+      4,
+      self_call,
+      ICFPExpr::lambda(
+        5,
+        n_var,
+        ICFPExpr::if_(
+          ICFPExpr::bin_op(n_var, BinOp::Equals, 1),
+          "R",
+          ICFPExpr::bin_op("R", Concat, ICFPExpr::call(self_call, VarRef(n_var) - 1)),
+        ),
+      ),
+    );
+
+    let genR = ICFPExpr::call(ICFPExpr::call(recurse.clone(), R_49), ICFPExpr::int(num_rs));
+
+    let L_49 = ICFPExpr::lambda(
+      6,
+      self_call,
+      ICFPExpr::lambda(
+        7,
+        n_var,
+        ICFPExpr::if_(
+          ICFPExpr::bin_op(n_var, BinOp::Equals, 1),
+          "L",
+          ICFPExpr::bin_op("L", Concat, ICFPExpr::call(self_call, VarRef(n_var) - 1)),
+        ),
+      ),
+    );
+
+    let genL = ICFPExpr::call(ICFPExpr::call(recurse.clone(), L_49), num_rs);
+
+    let RD = ICFPExpr::bin_op(genR, Concat, ICFPExpr::str("D"));
+    let LD = ICFPExpr::bin_op(genL, Concat, ICFPExpr::str("D"));
+
+    let sol = ICFPExpr::bin_op(RD, Concat, LD);
+
+    let prog = ICFPExpr::lambda(
+      8,
+      self_call,
+      ICFPExpr::lambda(
+        9,
+        n_var,
+        ICFPExpr::if_(
+          ICFPExpr::bin_op(n_var, BinOp::Equals, 1),
+          sol.clone(),
+          ICFPExpr::bin_op(
+            sol.clone(),
+            Concat,
+            ICFPExpr::call(self_call, VarRef(n_var) - 1),
+          ),
+        ),
+      ),
+    );
+
+    let final_result = ICFPExpr::call(ICFPExpr::call(recurse.clone(), prog), 25);
+
+    Ok(final_result)
+  }
+}
