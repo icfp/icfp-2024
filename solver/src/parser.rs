@@ -447,12 +447,22 @@ impl Display for ICFPExpr {
         BinOp::ApplyLambda => write!(f, "{}({})", left, right),
       },
       ICFPExpr::If(cond, if_true, if_false) => {
-        write!(f, "if ({}) {{ {} }} else {{ {} }}", cond, if_true, if_false)
+        write!(
+          f,
+          "if ({}) {{ return {} }} else {{ return {} }}",
+          cond, if_true, if_false
+        )
       }
-      ICFPExpr::Lambda(id, var, body) => write!(f, "(function lam_{id}({}){{ {} }})", var, body),
+      ICFPExpr::Lambda(id, var, body) => {
+        write!(f, "(function lam_{id}({}){{ return {} }})", var, body)
+      }
       ICFPExpr::VarRef(var) => write!(f, "{}", var),
       ICFPExpr::Closure { id, arg, body, env } => {
-        write!(f, "Closure({id}) {:?} ({}) => {{ {} }}", env, arg, body)
+        write!(
+          f,
+          "Closure({id}) {:?} ({}) => {{ return {} }}",
+          env, arg, body
+        )
       }
       ICFPExpr::Thunk(thunk) => f.debug_tuple("thunk").field(thunk).finish(),
       ICFPExpr::Unknown { indicator, body } => f
