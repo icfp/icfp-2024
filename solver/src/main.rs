@@ -129,7 +129,7 @@ async fn main() -> miette::Result<()> {
 
       if let ICFPExpr::String(page_text) = result {
         println!("\n");
-        termimad::print_inline(&page_text.decode()?)
+        println!("{}", &page_text.decode()?);
       } else {
         println!("Expr: {result:?}")
       };
@@ -206,7 +206,7 @@ async fn main() -> miette::Result<()> {
       }
     }
     Command::Fuzz {} => {
-      let result1 = problems::lambdaman::solutions::problem_9()?;
+      let _result1 = problems::lambdaman::solutions::problem_9()?;
     }
   }
 

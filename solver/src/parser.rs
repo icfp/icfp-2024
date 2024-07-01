@@ -378,6 +378,18 @@ impl From<i64> for ICFPExpr {
   }
 }
 
+impl From<i32> for ICFPExpr {
+  fn from(value: i32) -> Self {
+    Self::Integer(DeferredDecode::Lit(value.into()))
+  }
+}
+
+impl From<usize> for ICFPExpr {
+  fn from(value: usize) -> Self {
+    Self::Integer(DeferredDecode::Lit(value.into()))
+  }
+}
+
 impl From<Var> for ICFPExpr {
   fn from(value: Var) -> Self {
     Self::VarRef(value)

@@ -41,7 +41,6 @@ tonic = { version = "0.11.0", features = ["zstd"] }
 tracing = { version = "0.1.40", features = ["async-await"] }
 tracing-subscriber = { version = "0.3.18", features = ["serde", "serde_json", "env-filter", "time", "tracing-log", "json"] }
 serde_json = "1"
-termimad = "0.29.4"
 miette = { version = "7.2.0", features = ["backtrace", "backtrace-ext", "fancy", "supports-color"] }
 thiserror = "1.0.61"
 tracing-test = "0.2.4"

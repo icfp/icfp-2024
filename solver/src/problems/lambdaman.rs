@@ -1,5 +1,6 @@
 use crate::problems::lambdaman::Direction::Down;
 use crate::problems::{Direction, ProblemError, DIRS};
+use miette::Result;
 use std::collections::VecDeque;
 use std::fmt::Display;
 
@@ -44,6 +45,9 @@ impl Direction {
   }
 }
 
+use crate::parser::BinOp::Concat;
+use crate::parser::ICFPExpr::VarRef;
+use crate::parser::{BinOp, ICFPExpr, Var};
 use crate::problems::lambdaman::GridState::{Candy, Visited};
 use Direction::*;
 
@@ -233,29 +237,170 @@ pub fn solve(
   }
 }
 
+pub fn compress(solution: &str) -> Result<ICFPExpr> {
+  let self_call = Var(1);
+  let func = Var(2);
+
+  let recurse = ICFPExpr::lambda(
+    1,
+    func,
+    ICFPExpr::call(
+      ICFPExpr::lambda(
+        2,
+        self_call,
+        ICFPExpr::call(func, ICFPExpr::call(self_call, self_call)),
+      ),
+      ICFPExpr::lambda(
+        3,
+        self_call,
+        ICFPExpr::call(func, ICFPExpr::call(self_call, self_call)),
+      ),
+    ),
+  );
+
+  let char_var = Var(10);
+  let n_var = Var(12);
+
+  let gen_char_loop_f_char_self_n = ICFPExpr::lambda(
+    'c' as usize,
+    char_var,
+    ICFPExpr::lambda(
+      4,
+      self_call,
+      ICFPExpr::lambda(
+        5,
+        n_var,
+        ICFPExpr::if_(
+          ICFPExpr::bin_op(n_var, BinOp::Equals, 1),
+          char_var,
+          ICFPExpr::bin_op(
+            char_var,
+            Concat,
+            ICFPExpr::call(self_call, VarRef(n_var) - 1),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  fn let_in<F>(
+    var: Var,
+    expr: ICFPExpr,
+    in_expr: F,
+  ) -> ICFPExpr
+  where
+    F: FnOnce(Var) -> ICFPExpr,
+  {
+    ICFPExpr::call(ICFPExpr::lambda(0, var, in_expr(var)), expr)
+  }
+
+  const RLE_CUTOFF: usize = 2;
+
+  let y_comb = Var(0);
+  let prog = let_in(y_comb, recurse, |y| {
+    let loop_gen = Var(1);
+    let_in(loop_gen, gen_char_loop_f_char_self_n, |loop_gen| {
+      let gen_n_rs = Var(2);
+      let gen_n_r = ICFPExpr::call(y, ICFPExpr::call(loop_gen, "R"));
+      let_in(gen_n_rs, gen_n_r, |gen_n_rs| {
+        let gen_n_ls = Var(3);
+        let gen_n_l = ICFPExpr::call(y, ICFPExpr::call(loop_gen, "L"));
+        let_in(gen_n_ls, gen_n_l, |gen_n_ls| {
+          let gen_n_us = Var(4);
+          let gen_n_u = ICFPExpr::call(y, ICFPExpr::call(loop_gen, "U"));
+          let_in(gen_n_us, gen_n_u, |gen_n_us| {
+            let gen_n_ds = Var(5);
+            let gen_n_d = ICFPExpr::call(y, ICFPExpr::call(loop_gen, "D"));
+            let_in(gen_n_ds, gen_n_d, |gen_n_ds| {
+              let mut chars = solution.chars();
+              let first_char = chars.next().unwrap();
+              let init: (char, usize, Option<ICFPExpr>) = (first_char, 1, None);
+
+              let (last_char, last_count, accum) =
+                chars.fold(init, |(prev_char, count, acc), curr_char| {
+                  if curr_char == prev_char {
+                    (prev_char, count + 1, acc)
+                  } else {
+                    if count > RLE_CUTOFF {
+                      let func = match prev_char {
+                        'R' => ICFPExpr::call(gen_n_rs, count),
+                        'L' => ICFPExpr::call(gen_n_ls, count),
+                        'U' => ICFPExpr::call(gen_n_us, count),
+                        'D' => ICFPExpr::call(gen_n_ds, count),
+                        _ => panic!("Unexpected Char"),
+                      };
+
+                      if let Some(expr) = acc {
+                        (curr_char, 1, Some(ICFPExpr::bin_op(expr, Concat, func)))
+                      } else {
+                        (curr_char, 1, Some(func))
+                      }
+                    } else {
+                      if let Some(expr) = acc {
+                        let repeated = ICFPExpr::str(prev_char.to_string().repeat(count));
+                        (curr_char, 1, Some(ICFPExpr::bin_op(expr, Concat, repeated)))
+                      } else {
+                        let repeated = ICFPExpr::str(prev_char.to_string().repeat(count));
+                        (curr_char, 1, Some(repeated))
+                      }
+                    }
+                  }
+                });
+
+              let repeated = ICFPExpr::str(last_char.to_string().repeat(last_count));
+              ICFPExpr::bin_op(accum.unwrap(), Concat, repeated)
+            })
+          })
+        })
+      })
+    })
+  });
+
+  // fn callf_1<F: Fn(ICFPExpr) -> ICFPExpr>(target: &ICFPExpr) -> F {
+  //   |a| ICFPExpr::call(target, a)
+  // }
+  //
+  // callf_1()
+
+  Ok(prog)
+}
+
 #[cfg(test)]
 mod test {
-  use crate::evaluator::{eval, EvalError};
-  use crate::parser::BinOp::Concat;
-  use crate::parser::ICFPExpr::VarRef;
-  use crate::parser::{BinOp, Encode, ICFPExpr, Var};
+  use crate::evaluator::eval;
   use miette::Report;
-  use tracing_test::traced_test;
 
-  #[test]
+  // #[test]
   fn prob9() -> Result<(), Report> {
     let result = super::solutions::problem_9()?;
 
     assert_eq!(eval(result)?, "..........".into());
     Ok(())
   }
+
+  #[test]
+  fn rle() -> Result<(), Report> {
+    let result = super::compress("LLLDDDUUU")?;
+    println!("RLE: {:?}", result);
+
+    assert_eq!(eval(result)?, "LLLDDDUUU".into());
+    Ok(())
+  }
+
+  #[test]
+  fn rle_mixed() -> Result<(), Report> {
+    let result = super::compress("LLLDDURRRR")?;
+    println!("RLE: {:?}", result);
+
+    assert_eq!(eval(result)?, "LLLDDURRRR".into());
+    Ok(())
+  }
 }
 
 pub mod solutions {
-  use crate::evaluator::eval;
   use crate::parser::BinOp::Concat;
   use crate::parser::ICFPExpr::VarRef;
-  use crate::parser::{BinOp, Encode, ICFPExpr, Var};
+  use crate::parser::{BinOp, ICFPExpr, Var};
   use miette::Report;
 
   pub fn problem_9() -> Result<ICFPExpr, Report> {
@@ -287,10 +432,13 @@ pub mod solutions {
     //  .concat(
     //        (loop(49) { // 20 "L".concat(loop(48)) }).concat("D")).(loop(24))
 
+    // a + b
+    // + b a
+
     let num_rs = 49;
 
     let n_var = Var(10);
-    let R_49 = ICFPExpr::lambda(
+    let gen_r_loop = ICFPExpr::lambda(
       4,
       self_call,
       ICFPExpr::lambda(
@@ -304,9 +452,12 @@ pub mod solutions {
       ),
     );
 
-    let genR = ICFPExpr::call(ICFPExpr::call(recurse.clone(), R_49), ICFPExpr::int(num_rs));
+    let generate_n_rs = ICFPExpr::call(
+      ICFPExpr::call(recurse.clone(), gen_r_loop),
+      ICFPExpr::int(num_rs),
+    );
 
-    let L_49 = ICFPExpr::lambda(
+    let l_generator_func = ICFPExpr::lambda(
       6,
       self_call,
       ICFPExpr::lambda(
@@ -320,12 +471,12 @@ pub mod solutions {
       ),
     );
 
-    let genL = ICFPExpr::call(ICFPExpr::call(recurse.clone(), L_49), num_rs);
+    let generate_ls = ICFPExpr::call(ICFPExpr::call(recurse.clone(), l_generator_func), num_rs);
 
-    let RD = ICFPExpr::bin_op(genR, Concat, ICFPExpr::str("D"));
-    let LD = ICFPExpr::bin_op(genL, Concat, ICFPExpr::str("D"));
+    let r_concat_d = ICFPExpr::bin_op(generate_n_rs, Concat, ICFPExpr::str("D"));
+    let l_concat_d = ICFPExpr::bin_op(generate_ls, Concat, ICFPExpr::str("D"));
 
-    let sol = ICFPExpr::bin_op(RD, Concat, LD);
+    let sol = ICFPExpr::bin_op(r_concat_d, Concat, l_concat_d);
 
     let prog = ICFPExpr::lambda(
       8,

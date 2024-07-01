@@ -218,7 +218,7 @@ pub(crate) async fn submit_expr(
 
   let result = ICFPExpr::parse(&response).map_err(|e| miette!("Error Parsing: {}", e))?;
 
-  println!("Response: {result:?}");
+  println!("Response: {result}");
 
   Ok(())
 }
