@@ -575,7 +575,7 @@ fn pretty_grid_line(
         CellValues::Param(p) => p.to_string(),
         CellValues::Val(v) => v.to_string(),
         CellValues::EndState => "S".to_string(),
-        CellValues::Empty => "•".to_string(),
+        CellValues::Empty => "·".to_string(),
       };
 
       let point = Point::at(x as i32, col as i32);
