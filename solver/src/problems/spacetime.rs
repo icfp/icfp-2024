@@ -2,6 +2,7 @@ use crate::problems::{Direction, Point, ProblemError};
 use std::cmp::min;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Display, Formatter};
+use std::time::Duration;
 use tracing::{debug, error, info, trace};
 
 // Shared types
@@ -541,6 +542,7 @@ fn evaluate(
         states[time] = map;
       }
     }
+    std::thread::sleep(Duration::from_millis(300))
   }
 }
 // End
