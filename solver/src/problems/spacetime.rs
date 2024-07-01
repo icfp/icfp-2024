@@ -529,7 +529,7 @@ fn evaluate(
 }
 // End
 
-const COLUMN_WIDTH: usize = 2;
+const COLUMN_WIDTH: usize = 3;
 
 fn grid_line(line: &[CellValues]) -> String {
   line
