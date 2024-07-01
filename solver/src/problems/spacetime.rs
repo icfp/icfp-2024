@@ -513,7 +513,7 @@ fn evaluate(
       }
     };
 
-    print_pretty_grid(&grid, &written, &consumed);
+    print_pretty_grid(&grid, &consumed, &written);
 
     if map
       .values()
