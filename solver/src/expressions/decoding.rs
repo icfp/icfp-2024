@@ -99,7 +99,7 @@ DEC	OCT	HEX	BIN	Symbol	HTML Number	HTML Name	Description
  */
 use crate::expressions::encoding::MIN_CHAR;
 use crate::expressions::numbers;
-use crate::parser::{BinOp, IntType, NatType, UnOp, Var};
+use crate::expressions::parser::{BinOp, IntType, NatType, UnOp, Var};
 use miette::miette;
 use std::cell::OnceCell;
 use std::fmt::{Debug, Display, Formatter};
@@ -332,7 +332,7 @@ impl Display for DeferredDecode<String> {
 #[cfg(test)]
 mod tests {
   use crate::expressions::decoding::Decode;
-  use crate::parser::{BinOp, UnOp};
+  use crate::expressions::parser::{BinOp, UnOp};
 
   #[test]
   fn decode_string() -> miette::Result<()> {

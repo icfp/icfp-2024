@@ -1,6 +1,6 @@
 use crate::expressions::decoding::{DeferredDecode, ALIEN_ASCII};
 use crate::expressions::numbers;
-use crate::parser::{BinOp, ICFPExpr, IntType, NatType, UnOp, Var};
+use crate::expressions::parser::{BinOp, ICFPExpr, IntType, NatType, UnOp, Var};
 use std::collections::VecDeque;
 use tracing::{trace, trace_span};
 
@@ -177,7 +177,7 @@ impl Encode for BinOp {
 #[cfg(test)]
 mod tests {
   use super::Encode;
-  use crate::parser::{ICFPExpr, Var};
+  use crate::expressions::parser::{ICFPExpr, Var};
 
   #[test]
   fn encode_string() {

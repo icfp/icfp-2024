@@ -1,7 +1,7 @@
 use crate::communicator::send_program;
-use crate::evaluator::eval;
 use crate::expressions::encoding::Encode;
-use crate::parser::{BinOp, ICFPExpr, Parsable};
+use crate::expressions::evaluator::eval;
+use crate::expressions::parser::{BinOp, ICFPExpr, Parsable};
 use miette::{miette, Diagnostic};
 use std::fmt::{Debug, Formatter};
 use std::ops::Add;

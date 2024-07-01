@@ -44,9 +44,10 @@ impl Direction {
   }
 }
 
-use crate::parser::BinOp::Concat;
-use crate::parser::ICFPExpr::VarRef;
-use crate::parser::{BinOp, ICFPExpr, Var};
+use crate::expressions::generator::let_in;
+use crate::expressions::parser::BinOp::Concat;
+use crate::expressions::parser::ICFPExpr::VarRef;
+use crate::expressions::parser::{BinOp, ICFPExpr, Var};
 use crate::problems::lambdaman::GridState::{Candy, Visited};
 use Direction::*;
 
@@ -283,17 +284,6 @@ pub fn compress(solution: &str) -> ICFPExpr {
     ),
   );
 
-  fn let_in<F>(
-    var: Var,
-    expr: ICFPExpr,
-    in_expr: F,
-  ) -> ICFPExpr
-  where
-    F: FnOnce(Var) -> ICFPExpr,
-  {
-    ICFPExpr::call(ICFPExpr::lambda(0, var, in_expr(var)), expr)
-  }
-
   const RLE_CUTOFF: usize = 2;
 
   let y_comb = Var(0);
@@ -383,7 +373,7 @@ pub fn compress(solution: &str) -> ICFPExpr {
 
 #[cfg(test)]
 mod test {
-  use crate::evaluator::eval;
+  use crate::expressions::evaluator::eval;
   use miette::Report;
 
   // #[test]
@@ -414,9 +404,9 @@ mod test {
 }
 
 pub mod solutions {
-  use crate::parser::BinOp::Concat;
-  use crate::parser::ICFPExpr::VarRef;
-  use crate::parser::{BinOp, ICFPExpr, Var};
+  use crate::expressions::parser::BinOp::Concat;
+  use crate::expressions::parser::ICFPExpr::VarRef;
+  use crate::expressions::parser::{BinOp, ICFPExpr, Var};
   use miette::Report;
 
   pub fn problem_9() -> Result<ICFPExpr, Report> {

@@ -1,5 +1,5 @@
 use crate::expressions::encoding::{MIN_CHAR, NUM_BASE};
-use crate::parser::{IntType, NatType};
+use crate::expressions::parser::{IntType, NatType};
 use malachite::num::arithmetic::traits::{Mod, Pow};
 use malachite::num::basic::traits::Zero;
 use miette::{miette, LabeledSpan};

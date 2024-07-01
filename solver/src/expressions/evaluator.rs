@@ -6,12 +6,12 @@ use std::ops::{Add, Neg};
 use std::sync::Arc;
 
 use crate::expressions::decoding::{Decode, DeferredDecode};
+use crate::expressions::encoding::Encode;
 use crate::expressions::numbers;
 use miette::{Diagnostic, Report};
 use thiserror::Error;
 use tracing::{debug, debug_span, error, info, trace, trace_span, warn};
 
-use super::expressions::encoding::Encode;
 use super::parser::{BinOp, ICFPExpr, IntType, UnOp, Var};
 
 type EvalResult<Error = EvalError> = Result<ICFPExpr, Error>;
@@ -790,9 +790,9 @@ impl ICFPExpr {
 
 #[cfg(test)]
 mod tests {
-  use crate::evaluator::{eval, Environment, EvalError, Evaluable};
-  use crate::parser::ICFPExpr::VarRef;
-  use crate::parser::{BinOp, ICFPExpr, Parsable, Var};
+  use crate::expressions::evaluator::{eval, Environment, EvalError, Evaluable};
+  use crate::expressions::parser::ICFPExpr::VarRef;
+  use crate::expressions::parser::{BinOp, ICFPExpr, Parsable, Var};
   use tracing_test::traced_test;
 
   #[traced_test]

@@ -1,14 +1,12 @@
 use crate::communicator::send_program;
-use crate::parser::{ICFPExpr, Parsable};
 use clap::{Parser, Subcommand};
 use dotenvy::dotenv;
 use expressions::encoding::Encode;
+use expressions::parser::{ICFPExpr, Parsable};
 use miette::miette;
 use tracing::{error, info};
 
 mod communicator;
-mod evaluator;
-mod parser;
 
 mod expressions;
 
@@ -164,7 +162,7 @@ async fn main() -> miette::Result<()> {
 
       println!("Response: {result:#?}");
 
-      println!("Result: {:?}", evaluator::eval(result))
+      println!("Result: {:?}", expressions::evaluator::eval(result))
     }
     Command::DL { name, id } => problems::download(name, id).await?,
     Command::Spaceship {

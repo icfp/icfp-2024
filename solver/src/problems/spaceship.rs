@@ -1,6 +1,6 @@
 use crate::communicator::send_program;
 use crate::expressions::encoding::Encode;
-use crate::parser::{ICFPExpr, Parsable};
+use crate::expressions::parser::{ICFPExpr, Parsable};
 use crate::problems::Point;
 use miette::miette;
 use std::ops::Not;
