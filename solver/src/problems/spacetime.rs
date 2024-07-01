@@ -484,10 +484,13 @@ fn evaluate(
       trace!("processed operator")
     }
 
+    let mut warp_writes = HashSet::new();
+
     if let Some(new_time) = new_time {
       map = states[new_time].clone();
       for changes in warps {
         for (p, cell) in changes.results {
+          warp_writes.insert(p);
           map.insert(
             p,
             Cell {
@@ -513,7 +516,7 @@ fn evaluate(
       }
     };
 
-    print_pretty_grid(&grid, &consumed, &written);
+    print_pretty_grid(&grid, &consumed, &written, &warp_writes);
 
     if map
       .values()
@@ -554,9 +557,11 @@ fn pretty_grid_line(
   line: &[CellValues],
   consumed: &HashSet<Point>,
   writes: &HashSet<Point>,
+  warp_writes: &HashSet<Point>,
 ) -> String {
   use owo_colors::{OwoColorize, Style};
 
+  let warp_write = Style::new().bright_black().on_bright_green().blink();
   let write = Style::new().bright_black().on_bright_red().bold();
   let read = Style::new().black().on_bright_blue().underline();
   let norm = Style::new().white().on_black();
@@ -570,11 +575,13 @@ fn pretty_grid_line(
         CellValues::Param(p) => p.to_string(),
         CellValues::Val(v) => v.to_string(),
         CellValues::EndState => "S".to_string(),
-        CellValues::Empty => ".".to_string(),
+        CellValues::Empty => "•".to_string(),
       };
 
       let point = Point::at(x as i32, col as i32);
-      let sym = if writes.contains(&point) {
+      let sym = if warp_writes.contains(&point) {
+        symbol.style(warp_write)
+      } else if writes.contains(&point) {
         symbol.style(write)
       } else if consumed.contains(&point) {
         symbol.style(read)
@@ -617,6 +624,7 @@ fn print_pretty_grid(
   grid: &HashMap<Point, Cell>,
   consumed: &HashSet<Point>,
   writes: &HashSet<Point>,
+  warp_writes: &HashSet<Point>,
 ) {
   let xs = grid.keys().map(|p| p.x).collect::<Vec<_>>();
   let ys = grid.keys().map(|p| p.y).collect::<Vec<_>>();
@@ -650,10 +658,12 @@ fn print_pretty_grid(
     map[(k.y - min_y) as usize][(k.x - min_x) as usize] = v.value;
   });
 
-  map
-    .iter()
-    .enumerate()
-    .for_each(|(no, line)| println!("{no:^3}| {}", pretty_grid_line(no, &line, consumed, writes)));
+  map.iter().enumerate().for_each(|(no, line)| {
+    println!(
+      "{no:^3}| {}",
+      pretty_grid_line(no, &line, consumed, writes, warp_writes)
+    )
+  });
   println!("{}", "=".repeat(COLUMN_WIDTH * cols + 10));
 }
 
