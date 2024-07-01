@@ -387,13 +387,13 @@ fn evaluate(
   });
 
   states.push(grid.clone()); // t1
+  let mut time = 1;
 
-  'ticker: for time in 1..=iterations {
+  'ticker: for tick in 1..=iterations {
     let mut new_time: Option<usize> = None;
-
     let grid = states[time].clone();
 
-    println!("======= T{time} =======");
+    println!("======= T{time} ({tick} ticks) =======");
     // print_grid(&grid);
 
     let operators: Vec<(Point, Operator)> = grid
@@ -467,6 +467,7 @@ fn evaluate(
             // TODO: Enforce conflict writes
 
             if let Some(time_delta) = changes.time {
+              debug!(time, time_delta, "warping");
               let proposal = time - time_delta;
               trace!(to = proposal, "requesting warp");
               new_time = match new_time {
@@ -487,7 +488,12 @@ fn evaluate(
     let mut warp_writes = HashSet::new();
 
     if let Some(new_time) = new_time {
+      if new_time == 0 || new_time >= time {
+        error!("Invalid warp time: {new_time}");
+      }
+
       map = states[new_time].clone();
+      time = new_time;
       for changes in warps {
         for (p, cell) in changes.results {
           warp_writes.insert(p);
@@ -528,7 +534,12 @@ fn evaluate(
       states.push(map);
       break;
     } else {
-      states.push(map);
+      time += 1;
+      if time == states.len() {
+        states.push(map);
+      } else {
+        states[time] = map;
+      }
     }
   }
 }

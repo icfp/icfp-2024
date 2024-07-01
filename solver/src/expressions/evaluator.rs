@@ -790,6 +790,7 @@ impl ICFPExpr {
 
 #[cfg(test)]
 mod tests {
+  use crate::expressions::encoding::Encode;
   use crate::expressions::evaluator::{eval, Environment, EvalError, Evaluable};
   use crate::expressions::parser::ICFPExpr::VarRef;
   use crate::expressions::parser::{BinOp, ICFPExpr, Parsable, Var};
@@ -804,12 +805,13 @@ mod tests {
       ICFPExpr::if_(ICFPExpr::var(0), ICFPExpr::const_true(), ICFPExpr::int(3)),
     );
 
+    dbg!(&f.encode());
+
     let env = Environment::default();
 
-    assert_eq!(
-      ICFPExpr::call(f.clone(), ICFPExpr::const_true()).eval(&env, 0)?,
-      ICFPExpr::const_true()
-    );
+    let call = ICFPExpr::call(f.clone(), ICFPExpr::const_true());
+    dbg!(&call.encode());
+    assert_eq!(call.eval(&env, 0)?, ICFPExpr::const_true());
     assert_eq!(
       ICFPExpr::call(f, ICFPExpr::const_false()).eval(&env, 0)?,
       ICFPExpr::int(3)
