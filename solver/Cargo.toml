@@ -20,6 +20,7 @@ miette= { workspace = true, features = ["fancy"] }
 thiserror.workspace = true
 malachite.workspace = true
 tracing-test.workspace = true
+owo-colors = { workspace = true, features = ["alloc"] }
 
 [lints]
 workspace = true

@@ -394,7 +394,7 @@ fn evaluate(
     let grid = states[time].clone();
 
     println!("======= T{time} =======");
-    print_grid(&grid);
+    // print_grid(&grid);
 
     let operators: Vec<(Point, Operator)> = grid
       .values()
@@ -513,6 +513,8 @@ fn evaluate(
       }
     };
 
+    print_pretty_grid(&grid, &written, &consumed);
+
     if map
       .values()
       .find(|v| matches!(v.value, CellValues::EndState))
@@ -542,8 +544,45 @@ fn grid_line(line: &[CellValues]) -> String {
         CellValues::EndState => "S".to_string(),
         CellValues::Empty => ".".to_string(),
       };
-
       format!("{:^COLUMN_WIDTH$}", symbol)
+    })
+    .collect::<String>()
+}
+
+fn pretty_grid_line(
+  col: usize,
+  line: &[CellValues],
+  consumed: &HashSet<Point>,
+  writes: &HashSet<Point>,
+) -> String {
+  use owo_colors::{OwoColorize, Style};
+
+  let write = Style::new().bright_black().on_bright_red().bold();
+  let read = Style::new().black().on_bright_blue().underline();
+  let norm = Style::new().white().on_black();
+
+  line
+    .iter()
+    .enumerate()
+    .map(|(x, cell)| {
+      let symbol = match cell {
+        CellValues::Op(o) => o.to_string(),
+        CellValues::Param(p) => p.to_string(),
+        CellValues::Val(v) => v.to_string(),
+        CellValues::EndState => "S".to_string(),
+        CellValues::Empty => ".".to_string(),
+      };
+
+      let point = Point::at(x as i32, col as i32);
+      let sym = if writes.contains(&point) {
+        symbol.style(write)
+      } else if consumed.contains(&point) {
+        symbol.style(read)
+      } else {
+        symbol.style(norm)
+      };
+
+      format!("{:^COLUMN_WIDTH$}", sym)
     })
     .collect::<String>()
 }
@@ -572,6 +611,50 @@ fn print_compact(grid: &HashMap<Point, Cell>) -> String {
     .map(|line| grid_line(&line))
     .collect::<Vec<_>>()
     .join("\n")
+}
+
+fn print_pretty_grid(
+  grid: &HashMap<Point, Cell>,
+  consumed: &HashSet<Point>,
+  writes: &HashSet<Point>,
+) {
+  let xs = grid.keys().map(|p| p.x).collect::<Vec<_>>();
+  let ys = grid.keys().map(|p| p.y).collect::<Vec<_>>();
+
+  let min_x = min(*xs.iter().min().unwrap(), 0);
+  let max_x = *xs.iter().max().unwrap() + 1;
+
+  let min_y = min(*ys.iter().min().unwrap(), 0);
+  let max_y = *ys.iter().max().unwrap() + 1;
+
+  let cols = (max_x - min_x) as usize;
+  let rows = (max_y - min_y) as usize;
+
+  println!("{}", "=".repeat(COLUMN_WIDTH * cols + 10));
+  println!(
+    "   | {}",
+    (0..cols)
+      .map(|c| {
+        if c < 10 || c % 2 == 0 {
+          format!("{c:^COLUMN_WIDTH$}")
+        } else {
+          format!("{:^COLUMN_WIDTH$}", "")
+        }
+      })
+      .collect::<String>()
+  );
+  println!("{}", "_".repeat(COLUMN_WIDTH * cols + 10));
+  let mut map = vec![vec![CellValues::default(); cols]; rows];
+
+  grid.iter().for_each(|(k, v)| {
+    map[(k.y - min_y) as usize][(k.x - min_x) as usize] = v.value;
+  });
+
+  map
+    .iter()
+    .enumerate()
+    .for_each(|(no, line)| println!("{no:^3}| {}", pretty_grid_line(no, &line, consumed, writes)));
+  println!("{}", "=".repeat(COLUMN_WIDTH * cols + 10));
 }
 
 fn print_grid(grid: &HashMap<Point, Cell>) {
@@ -693,7 +776,14 @@ pub(crate) fn simulate(
   let arg_map = args
     .iter()
     .zip([Parameter::A, Parameter::B])
-    .map(|(arg, param)| (param, arg.parse().unwrap()))
+    .map(|(arg, param)| {
+      (
+        param,
+        arg
+          .parse()
+          .unwrap_or_else(|_| panic!("invalid digit: {arg})")),
+      )
+    })
     .collect();
 
   evaluate(map, arg_map, iterations);

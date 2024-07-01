@@ -213,7 +213,7 @@ pub(crate) async fn submit_expr(
 
   let encoded_solution = prog.encode();
 
-  dbg!(&ICFPExpr::parse(&encoded_solution)?);
+  // dbg!(&ICFPExpr::parse(&encoded_solution)?);
 
   let response = send_program(encoded_solution).await?;
 
