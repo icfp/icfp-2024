@@ -4,7 +4,7 @@ use dotenvy::dotenv;
 use expressions::encoding::Encode;
 use expressions::parser::{ICFPExpr, Parsable};
 use miette::miette;
-use tracing::{error, info};
+use tracing::{error, info, info_span};
 
 mod communicator;
 
@@ -199,11 +199,13 @@ async fn main() -> miette::Result<()> {
       problem: problem_id,
       command,
     } => {
+      let _3d_span = info_span!("3d", id = problem_id).entered();
       const PROBLEM_NAME: &'static str = "3d";
       let solution = problems::load_solution(PROBLEM_NAME, problem_id)?;
 
       match command {
         SpaceCommand::Solve => {
+          let _solve_span = info_span!("solve").entered();
           let solution = problems::spacetime::solve(problem_id, solution)?;
           problems::submit_new_line(PROBLEM_NAME, problem_id, solution).await?
         }

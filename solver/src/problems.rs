@@ -206,14 +206,14 @@ pub(crate) async fn submit_expr(
   id: usize,
   solution: ICFPExpr,
 ) -> miette::Result<()> {
-  info!("Submitting program solution");
+  info!(%solution, "Submitting program solution");
 
   let request = format!("solve {problem}{id} ");
   let prog = ICFPExpr::bin_op(request, BinOp::Concat, solution);
 
   let encoded_solution = prog.encode();
 
-  // ICFPExpr::parse(&encoded_solution)?;
+  dbg!(&ICFPExpr::parse(&encoded_solution)?);
 
   let response = send_program(encoded_solution).await?;
 
@@ -231,10 +231,10 @@ pub(crate) async fn submit_new_line(
   id: usize,
   solution: String,
 ) -> miette::Result<()> {
-  let request = format!("solve {problem}{id}\n{solution}");
+  let solution = format!("\n {solution}");
 
-  info!(request, "Submitting solution on new line");
-  let prog = ICFPExpr::str(request);
+  info!(solution, "Submitting solution on new line");
+  let prog = ICFPExpr::str(solution);
 
   submit_expr(problem, id, prog).await?;
 

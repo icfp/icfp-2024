@@ -190,6 +190,26 @@ mod tests {
   }
 
   #[test]
+  fn encode_string_with_new_line_middle() {
+    let input = "Hello\nWorld!";
+    let string = input.to_string().encode();
+
+    let expected = "B%,,/~Q/2,$_";
+
+    assert_eq!(string, expected);
+  }
+
+  #[test]
+  fn encode_string_with_new_line_start() {
+    let input = "\nHello World!";
+    let string = input.to_string().encode();
+
+    let expected = "~B%,,/}Q/2,$_";
+
+    assert_eq!(string, expected);
+  }
+
+  #[test]
   fn encode_bools() {
     assert_eq!(true.encode(), "T");
     assert_eq!(false.encode(), "F");
