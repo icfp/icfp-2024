@@ -1,13 +1,16 @@
 use crate::communicator::send_program;
-use crate::parser::{Encode, ICFPExpr, Parsable};
+use crate::parser::{ICFPExpr, Parsable};
 use clap::{Parser, Subcommand};
 use dotenvy::dotenv;
+use expressions::encoding::Encode;
 use miette::miette;
 use tracing::{error, info};
 
 mod communicator;
 mod evaluator;
 mod parser;
+
+mod expressions;
 
 /// https://docs.rs/clap/latest/clap/_tutorial/chapter_2/index.html#subcommands
 /// https://docs.rs/clap/latest/clap/_derive/index.html#command-attributes
@@ -105,8 +108,6 @@ async fn main() -> miette::Result<()> {
       println!("Response: {result:?}");
     }
     Command::Encode { string: s } => {
-      use parser::Encode;
-
       let x = ICFPExpr::str(s);
 
       println!("Encoded: {}", x.encode())
@@ -174,15 +175,26 @@ async fn main() -> miette::Result<()> {
     } => {
       const PROBLEM_NAME: &'static str = "lambdaman";
       let input = problems::load_input(PROBLEM_NAME, problem_id)?;
+
       if problem_id == 9 {
         let result = problems::lambdaman::solutions::problem_9()?;
         println!("Prog:");
-        println!("{}", result.encode());
+        let encoded = result.encode();
+        println!("Encoded Len: {}", encoded.len());
 
         problems::submit_expr(PROBLEM_NAME, problem_id, result).await?
       } else {
         let solution = problems::lambdaman::solve(problem_id, input)?;
-        problems::submit(PROBLEM_NAME, problem_id, solution).await?
+
+        println!("Solved");
+
+        let compressed = problems::lambdaman::compress(&solution);
+
+        let encoded = compressed.encode();
+        // println!("Compressed: {:?}", encoded);
+        println!("Encoded Len: {}", encoded.len());
+
+        problems::submit_expr(PROBLEM_NAME, problem_id, compressed).await?
       };
     }
     Command::Spacetime {

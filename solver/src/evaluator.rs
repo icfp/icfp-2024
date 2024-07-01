@@ -5,12 +5,14 @@ use std::fmt::{Debug, Formatter};
 use std::ops::{Add, Neg};
 use std::sync::Arc;
 
-use crate::parser::BinOp::Mul;
+use crate::expressions::decoding::{Decode, DeferredDecode};
+use crate::expressions::numbers;
 use miette::{Diagnostic, Report};
 use thiserror::Error;
 use tracing::{debug, debug_span, error, info, trace, trace_span, warn};
 
-use super::parser::{nums, BinOp, Decode, DeferredDecode, Encode, ICFPExpr, IntType, UnOp, Var};
+use super::expressions::encoding::Encode;
+use super::parser::{BinOp, ICFPExpr, IntType, UnOp, Var};
 
 type EvalResult<Error = EvalError> = Result<ICFPExpr, Error>;
 
@@ -375,7 +377,7 @@ impl Evaluable for ICFPExpr {
                   ICFPExpr::Integer(DeferredDecode::deferred(&coded))
                 }
                 DeferredDecode::Lit(lit) => ICFPExpr::Integer(DeferredDecode::Lit(
-                  nums::base94_decode(&lit.encode()).unwrap(),
+                  numbers::base94_decode(&lit.encode()).unwrap(),
                 )),
               }
             }
@@ -389,7 +391,7 @@ impl Evaluable for ICFPExpr {
                   ICFPExpr::String(DeferredDecode::deferred(&coded))
                 }
                 DeferredDecode::Lit(lit) => ICFPExpr::String(DeferredDecode::Lit(
-                  String::decode(&nums::base94_encode_number(lit)).unwrap(),
+                  String::decode(&numbers::base94_encode_number(lit)).unwrap(),
                 )),
               }
             }
@@ -733,7 +735,7 @@ impl ICFPExpr {
         let zero = ICFPExpr::int(0);
 
         match (left.simplify(env), right.simplify(env)) {
-          (Ok(is_zero), _) | (_, Ok(is_zero)) if *op == Mul && is_zero == zero => {
+          (Ok(is_zero), _) | (_, Ok(is_zero)) if *op == BinOp::Mul && is_zero == zero => {
             warn!(expr = %self, "simplified zero");
             return Ok(zero);
           }

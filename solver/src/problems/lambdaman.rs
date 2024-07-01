@@ -1,6 +1,5 @@
 use crate::problems::lambdaman::Direction::Down;
 use crate::problems::{Direction, ProblemError, DIRS};
-use miette::Result;
 use std::collections::VecDeque;
 use std::fmt::Display;
 
@@ -228,6 +227,7 @@ pub fn solve(
     Some(path) => {
       let solution = path.iter().map(|dir| dir.to_string()).collect::<String>();
       println!("Path: {}", solution);
+      println!("Length: {}", solution.len());
 
       Ok(solution)
     }
@@ -237,7 +237,7 @@ pub fn solve(
   }
 }
 
-pub fn compress(solution: &str) -> Result<ICFPExpr> {
+pub fn compress(solution: &str) -> ICFPExpr {
   let self_call = Var(1);
   let func = Var(2);
 
@@ -348,7 +348,23 @@ pub fn compress(solution: &str) -> Result<ICFPExpr> {
                 });
 
               let repeated = ICFPExpr::str(last_char.to_string().repeat(last_count));
-              ICFPExpr::bin_op(accum.unwrap(), Concat, repeated)
+
+              match accum {
+                Some(acc) => ICFPExpr::bin_op(acc, Concat, repeated),
+                None => {
+                  if last_count > RLE_CUTOFF {
+                    match last_char {
+                      'R' => ICFPExpr::call(gen_n_rs, last_count),
+                      'L' => ICFPExpr::call(gen_n_ls, last_count),
+                      'U' => ICFPExpr::call(gen_n_us, last_count),
+                      'D' => ICFPExpr::call(gen_n_ds, last_count),
+                      _ => panic!("Unexpected Char"),
+                    }
+                  } else {
+                    ICFPExpr::str(last_char.to_string().repeat(last_count))
+                  }
+                }
+              }
             })
           })
         })
@@ -362,7 +378,7 @@ pub fn compress(solution: &str) -> Result<ICFPExpr> {
   //
   // callf_1()
 
-  Ok(prog)
+  prog
 }
 
 #[cfg(test)]
@@ -380,7 +396,7 @@ mod test {
 
   #[test]
   fn rle() -> Result<(), Report> {
-    let result = super::compress("LLLDDDUUU")?;
+    let result = super::compress("LLLDDDUUU");
     println!("RLE: {:?}", result);
 
     assert_eq!(eval(result)?, "LLLDDDUUU".into());
@@ -389,7 +405,7 @@ mod test {
 
   #[test]
   fn rle_mixed() -> Result<(), Report> {
-    let result = super::compress("LLLDDURRRR")?;
+    let result = super::compress("LLLDDURRRR");
     println!("RLE: {:?}", result);
 
     assert_eq!(eval(result)?, "LLLDDURRRR".into());

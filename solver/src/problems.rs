@@ -1,12 +1,13 @@
 use crate::communicator::send_program;
 use crate::evaluator::eval;
-use crate::parser::{BinOp, Encode, ICFPExpr, Parsable};
+use crate::expressions::encoding::Encode;
+use crate::parser::{BinOp, ICFPExpr, Parsable};
 use miette::{miette, Diagnostic};
 use std::fmt::{Debug, Formatter};
 use std::ops::Add;
 use std::path::PathBuf;
 use thiserror::Error;
-use tracing::{debug, info, warn};
+use tracing::{debug, info, trace, warn};
 
 #[allow(dead_code)]
 pub mod spaceship;
@@ -181,7 +182,7 @@ pub(crate) fn load_solution(
   Ok(problem)
 }
 
-pub(crate) async fn submit(
+pub(crate) async fn _submit(
   problem: &str,
   id: usize,
   solution: String,
@@ -205,16 +206,18 @@ pub(crate) async fn submit_expr(
   id: usize,
   solution: ICFPExpr,
 ) -> miette::Result<()> {
-  let request = format!("solve {problem}{id} ");
+  info!("Submitting program solution");
 
-  info!(request, "Submitting solution");
+  let request = format!("solve {problem}{id} ");
   let prog = ICFPExpr::bin_op(request, BinOp::Concat, solution);
 
-  let encoded_solution = dbg!(prog.encode());
+  let encoded_solution = prog.encode();
 
-  dbg!(ICFPExpr::parse(&encoded_solution)?);
+  // ICFPExpr::parse(&encoded_solution)?;
 
   let response = send_program(encoded_solution).await?;
+
+  trace!(response, "got response");
 
   let result = ICFPExpr::parse(&response).map_err(|e| miette!("Error Parsing: {}", e))?;
 
@@ -230,7 +233,7 @@ pub(crate) async fn submit_new_line(
 ) -> miette::Result<()> {
   let request = format!("solve {problem}{id}\n{solution}");
 
-  info!(request, "Submitting solution");
+  info!(request, "Submitting solution on new line");
   let prog = ICFPExpr::str(request);
 
   submit_expr(problem, id, prog).await?;
